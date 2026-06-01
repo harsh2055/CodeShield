@@ -30,8 +30,29 @@ app.set('trust proxy', 1);
 connectDB();
 
 // Security & Performance middleware
+// Custom CSP: allows Monaco editor CDN, blob workers, and React build assets
 app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:     ["'self'"],
+      scriptSrc:      ["'self'", "'unsafe-inline'", "'unsafe-eval'",
+                       "https://cdn.jsdelivr.net"],
+      scriptSrcAttr:  ["'none'"],
+      styleSrc:       ["'self'", "'unsafe-inline'",
+                       "https://cdn.jsdelivr.net",
+                       "https://fonts.googleapis.com"],
+      fontSrc:        ["'self'", "https://fonts.gstatic.com",
+                       "https://cdn.jsdelivr.net", "data:"],
+      imgSrc:         ["'self'", "data:", "blob:"],
+      connectSrc:     ["'self'", "https://api.github.com",
+                       "https://integrate.api.nvidia.com"],
+      workerSrc:      ["'self'", "blob:"],
+      frameSrc:       ["'none'"],
+      objectSrc:      ["'none'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Required for Monaco editor workers
 }));
 app.use(compression());
 app.use(mongoSanitize());
