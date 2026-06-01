@@ -45,6 +45,7 @@ app.use(helmet({
                        "https://cdn.jsdelivr.net", "data:"],
       imgSrc:         ["'self'", "data:", "blob:"],
       connectSrc:     ["'self'", "https://api.github.com",
+                       "https://raw.githubusercontent.com",
                        "https://integrate.api.nvidia.com"],
       workerSrc:      ["'self'", "blob:"],
       frameSrc:       ["'none'"],
