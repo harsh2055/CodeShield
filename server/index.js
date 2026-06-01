@@ -1,5 +1,7 @@
 // server/index.js
 require('dotenv').config();
+// Default to production when not explicitly set (important for Render/cloud deployments)
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
