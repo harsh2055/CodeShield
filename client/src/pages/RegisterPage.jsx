@@ -42,8 +42,8 @@ const RegisterPage = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <img src={logoImg} alt="CodeLens Logo" style={{ width: '32px', height: '32px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeLens
+          <img src={logoImg} alt="CodeShield Logo" style={{ width: '32px', height: '32px', marginRight: '10px', verticalAlign: 'middle' }} />
+          CodeShield
         </div>
         <h1 className="auth-title">Create an account</h1>
         <p className="auth-sub">Start explaining code with AI</p>

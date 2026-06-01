@@ -2,14 +2,14 @@
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "codelens-explain",
-    title: "Explain in CodeLens",
+    id: "codeshield-explain",
+    title: "Explain in CodeShield",
     contexts: ["selection"]
   });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "codelens-explain") {
+  if (info.menuItemId === "codeshield-explain") {
     const selectedText = info.selectionText;
     if (selectedText) {
       // Production URL — works from anywhere without local server

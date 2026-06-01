@@ -202,7 +202,7 @@ const ExplainerPage = () => {
     try {
       const opt = {
         margin: 10,
-        filename: 'CodeLens-Analysis.pdf',
+        filename: 'CodeShield-Analysis.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0B0F19' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -221,8 +221,8 @@ const ExplainerPage = () => {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src={logoImg} alt="CodeLens Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeLens
+          <img src={logoImg} alt="CodeShield Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
+          CodeShield
         </div>
         <nav className="sidebar-nav">
           <a href="/" className="nav-item active">Explain & Debug</a>
@@ -416,7 +416,7 @@ const ExplainerPage = () => {
                   pageBreakInside: 'avoid'
                 }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '8px', color: msg.role === 'user' ? '#38BDF8' : '#A78BFA' }}>
-                    {msg.role === 'user' ? 'You' : 'CodeLens AI'}
+                    {msg.role === 'user' ? 'You' : 'CodeShield AI'}
                   </div>
                   <div className="markdown-body" style={{ lineHeight: '1.6' }}>
                     {msg.role === 'user' ? (

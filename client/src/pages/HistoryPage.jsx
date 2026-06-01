@@ -33,8 +33,8 @@ const HistoryPage = () => {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src={logoImg} alt="CodeLens Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeLens
+          <img src={logoImg} alt="CodeShield Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
+          CodeShield
         </div>
         <nav className="sidebar-nav">
           <a href="/" className="nav-item">Explain & Debug</a>

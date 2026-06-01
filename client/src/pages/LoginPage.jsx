@@ -35,8 +35,8 @@ const LoginPage = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <img src={logoImg} alt="CodeLens Logo" style={{ width: '32px', height: '32px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeLens
+          <img src={logoImg} alt="CodeShield Logo" style={{ width: '32px', height: '32px', marginRight: '10px', verticalAlign: 'middle' }} />
+          CodeShield
         </div>
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-sub">Sign in to your account</p>

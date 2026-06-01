@@ -93,7 +93,7 @@ const RepoPage = () => {
     try {
       const opt = {
         margin: 10,
-        filename: 'CodeLens-Repo-Analysis.pdf',
+        filename: 'CodeShield-Repo-Analysis.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0B0F19' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -112,8 +112,8 @@ const RepoPage = () => {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src={logoImg} alt="CodeLens Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeLens
+          <img src={logoImg} alt="CodeShield Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
+          CodeShield
         </div>
         <nav className="sidebar-nav">
           <a href="/" className="nav-item">Explain & Debug</a>
@@ -182,7 +182,7 @@ const RepoPage = () => {
             <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: '100px' }}>
               <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏗️</div>
               <p>Paste a public GitHub URL above to generate an architectural breakdown.</p>
-              <p style={{ fontSize: '12px', marginTop: '10px' }}>CodeLens will fetch the repository tree and README to construct a high-level overview.</p>
+              <p style={{ fontSize: '12px', marginTop: '10px' }}>CodeShield will fetch the repository tree and README to construct a high-level overview.</p>
             </div>
           )}
 
