@@ -23,6 +23,9 @@ CodeShield provides a comprehensive suite of tools built for developer productiv
 *   **📦 Deep Git Repository Analysis**: Paste any public GitHub repository URL to load the directory tree, inspect components, and let the AI analyze the codebase's architecture dynamically.
 *   **📤 Smooth GitHub File Import**: Direct file imports via raw URL parsing allow for seamless loading of single scripts into the sandbox workspace.
 *   **💻 Secure Code Execution Sandbox**: Run and test JS, HTML, CSS, and Python code snippets directly inside an integrated, isolated client-side execution container.
+*   **🛡️ AI Vulnerability Scanner**: Scan your scripts and repositories against common security vectors (SQLi, XSS, exposed tokens, insecure routing). Driven by the robust **`meta/llama-3.1-70b-instruct`** on NVIDIA NIM, it generates detailed threat reports complete with risk severity categories (Critical, High, Medium, Low) and safe rewritten code fixes.
+*   **⚙️ AI Code Refactoring Engine**: Optimize, convert, or clean legacy systems side-by-side. Supported by **`qwen/qwen3-coder-480b-a35b-instruct`** on NVIDIA NIM, it provides five dedicated refactoring modes (Clean Code, Performance, Security, Readability, and Modern Syntax) with Big O computational complexity updates.
+*   **📐 AI Visual Architecture Generator**: Dynamically map your microservices, databases, routers, and dependency graphs. Guided by **`meta/llama-3.3-70b-instruct`** on NVIDIA NIM, it translates systems descriptions into high-fidelity, zoomable interactive React SVG node diagrams with collapsible overview sidebars.
 *   **👥 Collaborative Workspaces**: 
     *   Create dedicated team environments.
     *   Invite members dynamically.
