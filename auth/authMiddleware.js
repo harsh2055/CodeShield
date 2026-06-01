@@ -29,7 +29,7 @@ const protect = async (req, res, next) => {
 
     // 3. Check user still exists and is active
     const user = await User.findById(decoded.id).select('-password');
-    if (!user || !user.isActive) {
+    if (!user || user.isActive === false) {
       return next(new AppError('User no longer exists or is inactive.', 401));
     }
 

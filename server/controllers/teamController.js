@@ -1,7 +1,7 @@
 // server/controllers/teamController.js
-const Team = require('../database/models/Team');
-const User = require('../database/models/User');
-const Explanation = require('../database/models/Explanation');
+const Team = require('../../database/models/Team');
+const User = require('../../database/models/User');
+const Explanation = require('../../database/models/Explanation');
 const { asyncHandler, AppError } = require('../middleware/errorHandler');
 
 // @desc    Create a new team

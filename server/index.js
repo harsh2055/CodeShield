@@ -15,6 +15,7 @@ const explainRoutes = require('./routes/explain');
 const historyRoutes = require('./routes/history');
 const sandboxRoutes = require('./routes/sandbox');
 const teamsRoutes = require('./routes/teams');
+const repoRoutes = require('./routes/repo');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();

@@ -50,8 +50,7 @@ userSchema.virtual('explanations', {
   foreignField: 'user',
 });
 
-// Index for email lookups
-userSchema.index({ email: 1 });
+// Index for fast lookups
 userSchema.index({ createdAt: -1 });
 
 // Pre-save: hash password if modified
@@ -73,7 +72,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Static method: find user by email with password
 userSchema.statics.findByCredentials = async function (email, password) {
-  const user = await this.findOne({ email, isActive: true }).select('+password');
+  const user = await this.findOne({ email, isActive: { $ne: false } }).select('+password');
   if (!user) return null;
   const isMatch = await user.comparePassword(password);
   return isMatch ? user : null;
