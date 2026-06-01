@@ -51,7 +51,7 @@ const refactorCode = asyncHandler(async (req, res) => {
 
   try {
     const response = await client.chat.completions.create({
-      model: 'deepseek-ai/deepseek-coder-33b-instruct',
+      model: 'qwen/qwen3-coder-480b-a35b-instruct',
       max_tokens: 4096,
       messages: [
         { 
