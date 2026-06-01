@@ -1,9 +1,8 @@
 // client/src/pages/RepoPage.jsx
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import logoImg from '../assets/logo.png';
 import ReactMarkdown from 'react-markdown';
 import html2pdf from 'html2pdf.js';
+import Sidebar from '../components/Sidebar';
 
 const MODELS = [
   { id: 'meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B (Fast)' },
@@ -12,8 +11,6 @@ const MODELS = [
 ];
 
 const RepoPage = () => {
-  const { user, logout } = useAuth();
-  
   const [url, setUrl] = useState('');
   const [model, setModel] = useState(MODELS[0].id);
   const [loading, setLoading] = useState(false);
@@ -110,27 +107,7 @@ const RepoPage = () => {
   return (
     <div className="app-layout">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <img src={logoImg} alt="CodeShield Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeShield
-        </div>
-        <nav className="sidebar-nav">
-          <a href="/" className="nav-item">Explain & Debug</a>
-          <a href="/history" className="nav-item">History</a>
-          <a href="/repo" className="nav-item active">Repo Analysis</a>
-        </nav>
-        
-        <div className="sidebar-user" style={{ marginTop: 'auto' }}>
-          <div className="user-info">
-            <div className="user-avatar">{user?.name?.[0]?.toUpperCase()}</div>
-            <div>
-              <div className="user-name">{user?.name}</div>
-            </div>
-          </div>
-          <button className="btn-logout" onClick={logout}>Sign out</button>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main Content */}
       <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>

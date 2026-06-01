@@ -4,11 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTeam } from '../context/TeamContext';
 import useExplain from '../hooks/useExplain';
 import { executeCode } from '../utils/sandboxApi';
-import logoImg from '../assets/logo.png';
 import Editor from '@monaco-editor/react';
 import ReactMarkdown from 'react-markdown';
 import html2pdf from 'html2pdf.js';
-import TeamModal from '../components/TeamModal';
+import Sidebar from '../components/Sidebar';
 
 const LANGUAGES = [
   'auto', 'javascript', 'typescript', 'python', 'java',
@@ -216,48 +215,7 @@ const ExplainerPage = () => {
   return (
     <div className="app-layout">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <img src={logoImg} alt="CodeShield Logo" style={{ width: '24px', height: '24px', marginRight: '10px', verticalAlign: 'middle' }} />
-          CodeShield
-        </div>
-        <nav className="sidebar-nav">
-          <a href="/" className="nav-item active">Explain & Debug</a>
-          <a href="/history" className="nav-item">History</a>
-          <a href="/repo" className="nav-item">Repo Analysis</a>
-        </nav>
-        
-        <div style={{ padding: '0 15px', marginTop: 'auto', marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '11px', color: '#94A3B8', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Workspace</label>
-          <select 
-            value={activeTeamId} 
-            onChange={(e) => switchTeam(e.target.value)}
-            style={{ width: '100%', background: '#1E293B', color: '#fff', border: '1px solid #334155', borderRadius: '4px', padding: '6px' }}
-          >
-            <option value="personal">Personal Account</option>
-            {teams.map(t => (
-              <option key={t._id} value={t._id}>Team: {t.name}</option>
-            ))}
-          </select>
-          <button 
-            onClick={() => setIsTeamModalOpen(true)}
-            style={{ width: '100%', marginTop: '8px', background: 'transparent', color: '#38BDF8', border: '1px solid #38BDF8', borderRadius: '4px', padding: '4px', fontSize: '11px', cursor: 'pointer' }}
-          >
-            Manage Teams
-          </button>
-        </div>
-        <div className="sidebar-user">
-          <div className="user-info">
-            <div className="user-avatar">{user?.name?.[0]?.toUpperCase()}</div>
-            <div>
-              <div className="user-name">{user?.name}</div>
-            </div>
-          </div>
-          <button className="btn-logout" onClick={logout}>Sign out</button>
-        </div>
-      </aside>
-
-      {isTeamModalOpen && <TeamModal onClose={() => setIsTeamModalOpen(false)} />}
+      <Sidebar />
 
       {/* Main */}
       <main className="main-content">

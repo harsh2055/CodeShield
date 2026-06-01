@@ -18,6 +18,9 @@ const historyRoutes = require('./routes/history');
 const sandboxRoutes = require('./routes/sandbox');
 const teamsRoutes = require('./routes/teams');
 const repoRoutes = require('./routes/repo');
+const vulnerabilityRoutes = require('./routes/vulnerability');
+const refactorRoutes = require('./routes/refactor');
+const architectureRoutes = require('./routes/architecture');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -100,6 +103,9 @@ app.use('/api/history', historyRoutes);
 app.use('/api/sandbox', sandboxRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/repo', repoRoutes);
+app.use('/api/vulnerability', vulnerabilityRoutes);
+app.use('/api/refactor', refactorRoutes);
+app.use('/api/architecture', architectureRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -8,6 +8,9 @@ import RegisterPage from './pages/RegisterPage';
 import ExplainerPage from './pages/ExplainerPage';
 import HistoryPage from './pages/HistoryPage';
 import RepoPage from './pages/RepoPage';
+import VulnerabilityPage from './pages/VulnerabilityPage';
+import RefactoringPage from './pages/RefactoringPage';
+import ArchitecturePage from './pages/ArchitecturePage';
 import './App.css';
 
 function App() {
@@ -23,6 +26,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ExplainerPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vulnerability"
+              element={
+                <ProtectedRoute>
+                  <VulnerabilityPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/refactor"
+              element={
+                <ProtectedRoute>
+                  <RefactoringPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/architecture"
+              element={
+                <ProtectedRoute>
+                  <ArchitecturePage />
                 </ProtectedRoute>
               }
             />
