@@ -1,0 +1,9 @@
+node_modules/
+client/node_modules/
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.log
+dist/
+client/build/
