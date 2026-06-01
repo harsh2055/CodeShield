@@ -16,7 +16,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       const BASE_URL = "https://codeshield-2876.onrender.com";
       
       const encodedCode = encodeURIComponent(selectedText);
-      const url = `${BASE_URL}/?code=${encodedCode}`;
+      // Use hash fragment (#) instead of query string (?) so the code
+      // is never sent to the server — this bypasses Render's WAF.
+      const url = `${BASE_URL}/#code=${encodedCode}`;
       
       chrome.tabs.create({ url });
     }

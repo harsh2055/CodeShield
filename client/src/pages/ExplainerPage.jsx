@@ -48,20 +48,17 @@ const ExplainerPage = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle extension ?code= imports
+  // Handle extension #code= imports (hash fragment bypasses WAF)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const importedCode = params.get('code');
-    if (importedCode) {
-      setCode(importedCode);
-      // We can't safely call handleExplain directly because state hasn't updated yet.
-      // So we use a ref or wait for the user to click it, or we trigger it after a timeout.
-      // Better yet, just pre-fill the code editor! The user can hit Explain.
-      // To auto-trigger, we can do it directly:
-      explain({ code: importedCode, language: 'auto', level: 'beginner', modelId: MODELS[0].id, action: 'explain', teamId: activeTeamId });
-      
-      // Clean up the URL so refreshing doesn't re-trigger it
-      window.history.replaceState({}, document.title, window.location.pathname);
+    const hash = window.location.hash; // e.g. "#code=..."
+    if (hash.startsWith('#code=')) {
+      const importedCode = decodeURIComponent(hash.slice(6)); // remove "#code="
+      if (importedCode) {
+        setCode(importedCode);
+        explain({ code: importedCode, language: 'auto', level: 'beginner', modelId: MODELS[0].id, action: 'explain', teamId: activeTeamId });
+        // Clean up hash so refreshing doesn't re-trigger
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
   }, []); // Run only once on mount
 
