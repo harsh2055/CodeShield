@@ -15,7 +15,7 @@ const client = new OpenAI({
 const githubHeaders = () => {
   const headers = {
     'Accept': 'application/vnd.github.v3+json',
-    'User-Agent': 'CodeLens-App',
+    'User-Agent': 'CodeShield-App',
   };
   if (process.env.GITHUB_TOKEN) {
     headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
