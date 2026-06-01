@@ -156,10 +156,6 @@ const autonomousFix = asyncHandler(async (req, res) => {
   let { code, language = 'auto', errorMessage = '', modelId = 'meta/llama-3.1-8b-instruct' } = req.body;
   const user = req.user;
 
-  if (!user.canExplain()) {
-    throw new AppError('Daily limit reached', 429);
-  }
-
   // Setup SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -185,8 +181,14 @@ const autonomousFix = asyncHandler(async (req, res) => {
       });
 
       let fixedCode = response.choices[0]?.message?.content || '';
-      // Clean up markdown block if present
-      fixedCode = fixedCode.replace(/^```[a-z]*\n/, '').replace(/\n```$/, '').trim();
+      
+      // Robust markdown extraction
+      const match = fixedCode.match(/```[a-zA-Z]*\n([\s\S]*?)```/);
+      if (match && match[1]) {
+        fixedCode = match[1].trim();
+      } else {
+        fixedCode = fixedCode.replace(/^```[a-zA-Z]*\n/, '').replace(/\n```$/, '').trim();
+      }
 
       res.write(`data: ${JSON.stringify({ status: `Attempt ${i}/${MAX_ITERATIONS}: Testing generated fix...`, code: fixedCode })}\n\n`);
       
@@ -219,7 +221,6 @@ const autonomousFix = asyncHandler(async (req, res) => {
       })}\n\n`);
     }
 
-    await user.incrementUsage();
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
 

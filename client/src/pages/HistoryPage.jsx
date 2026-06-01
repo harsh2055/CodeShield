@@ -37,8 +37,9 @@ const HistoryPage = () => {
           CodeLens
         </div>
         <nav className="sidebar-nav">
-          <a href="/" className="nav-item">Explain</a>
+          <a href="/" className="nav-item">Explain & Debug</a>
           <a href="/history" className="nav-item active">History</a>
+          <a href="/repo" className="nav-item">Repo Analysis</a>
         </nav>
         
         <div style={{ padding: '0 15px', marginTop: 'auto', marginBottom: '20px' }}>

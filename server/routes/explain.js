@@ -2,7 +2,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { explainCode, chatFollowUp } = require('../../ai/explainController');
+const { explainCode, chatFollowUp, autonomousFix } = require('../../ai/explainController');
 const { protect } = require('../../auth/authMiddleware');
 const { validate } = require('../middleware/validate');
 
@@ -85,6 +85,9 @@ router.post('/', protect, aiLimiter, explainRules, antiInjectionRules, validate,
 // @access  Private
 router.post('/:id/chat', protect, aiLimiter, chatRules, validate, chatFollowUp);
 
-
+// @route   POST /api/explain/agent
+// @desc    Autonomous AI Agent to fix code iteratively
+// @access  Private
+router.post('/agent', protect, aiLimiter, explainRules, antiInjectionRules, validate, autonomousFix);
 
 module.exports = router;

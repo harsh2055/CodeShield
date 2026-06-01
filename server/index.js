@@ -74,6 +74,7 @@ app.use('/api/explain', explainRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/sandbox', sandboxRoutes);
 app.use('/api/teams', teamsRoutes);
+app.use('/api/repo', repoRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

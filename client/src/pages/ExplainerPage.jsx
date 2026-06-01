@@ -48,6 +48,23 @@ const ExplainerPage = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Handle extension ?code= imports
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const importedCode = params.get('code');
+    if (importedCode) {
+      setCode(importedCode);
+      // We can't safely call handleExplain directly because state hasn't updated yet.
+      // So we use a ref or wait for the user to click it, or we trigger it after a timeout.
+      // Better yet, just pre-fill the code editor! The user can hit Explain.
+      // To auto-trigger, we can do it directly:
+      explain({ code: importedCode, language: 'auto', level: 'beginner', modelId: MODELS[0].id, action: 'explain', teamId: activeTeamId });
+      
+      // Clean up the URL so refreshing doesn't re-trigger it
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []); // Run only once on mount
+
   const handleExplain = async (e) => {
     e.preventDefault();
     if (!code.trim()) return;
@@ -67,7 +84,7 @@ const ExplainerPage = () => {
     setTerminalOutput('> Agent initialized. Passing control to AI...\n');
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('cl_token');
       const response = await fetch('/api/explain/agent', {
         method: 'POST',
         headers: {
@@ -210,6 +227,7 @@ const ExplainerPage = () => {
         <nav className="sidebar-nav">
           <a href="/" className="nav-item active">Explain & Debug</a>
           <a href="/history" className="nav-item">History</a>
+          <a href="/repo" className="nav-item">Repo Analysis</a>
         </nav>
         
         <div style={{ padding: '0 15px', marginTop: 'auto', marginBottom: '20px' }}>

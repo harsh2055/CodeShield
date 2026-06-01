@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ExplainerPage from './pages/ExplainerPage';
 import HistoryPage from './pages/HistoryPage';
+import RepoPage from './pages/RepoPage';
 import './App.css';
 
 function App() {
@@ -30,6 +31,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <HistoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repo"
+              element={
+                <ProtectedRoute>
+                  <RepoPage />
                 </ProtectedRoute>
               }
             />

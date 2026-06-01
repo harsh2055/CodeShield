@@ -109,9 +109,43 @@ ${code}
 Respond ONLY with the complete, corrected raw code block. Do NOT include markdown formatting like \`\`\`python. Do NOT include any explanations, apologies, or conversational text. Just output the raw code that fixes the issue so it can be executed directly.`;
 };
 
+const buildRepoPrompt = ({ owner, repo, treeText, readmeText }) => {
+  return `You are a Principal Software Architect analyzing a GitHub repository.
+
+Repository: ${owner}/${repo}
+
+# File Structure:
+<tree>
+${treeText}
+</tree>
+
+# README content (truncated):
+<readme>
+${readmeText || 'No README provided.'}
+</readme>
+
+Analyze the architecture of this repository and respond ONLY with Markdown. Do not wrap your response in JSON. Structure your response with the following headers:
+
+## Overview
+(2-3 paragraphs explaining what this project is and its primary purpose)
+
+## Tech Stack
+(List the primary languages, frameworks, and tools used, based on the file extensions and README)
+
+## Architecture Breakdown
+(Break down the core directories and their responsibilities. E.g. what does the 'src' folder do? What does the 'server' folder do? Where is the database logic?)
+
+## Entry Points
+(Where does the application start? e.g. index.js, main.go, App.tsx)
+
+## Notable Observations
+(Any interesting design patterns, potential security flaws, or organizational choices you observe)`;
+};
+
 module.exports = {
   systemPrompt,
   buildExplainPrompt,
   buildDebugPrompt,
   buildAgentPrompt,
+  buildRepoPrompt,
 };
