@@ -8,11 +8,35 @@ const ArchitecturePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [report, setReport] = useState(null);
-  const [selectedNode, setSelectedNode] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [selectedNode, setSelectedNode] = useState(null);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
+  const [activeMobileTab, setActiveMobileTab] = useState('input');
 
   const canvasRef = useRef(null);
+
+  const handleMouseDown = (e) => {
+    // Start drag-to-pan if clicking on the background grid/canvas
+    if (e.target.tagName === 'svg' || e.target.id === 'svg-bg' || e.target.tagName === 'line') {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   const handleGenerate = async () => {
     if (!context.trim()) return;
@@ -66,7 +90,7 @@ const ArchitecturePage = () => {
       layerGroups[layer].push(node);
     });
 
-    const canvasWidth = 540;
+    const canvasWidth = 700;
     const canvasHeight = 440;
     const layers = Object.keys(layerGroups).sort();
     const layerCount = layers.length;
@@ -74,10 +98,10 @@ const ArchitecturePage = () => {
     layers.forEach((layerKey, layerIdx) => {
       const nodesInLayer = layerGroups[layerKey];
       const count = nodesInLayer.length;
-      const y = ((layerIdx + 0.5) / layerCount) * canvasHeight;
+      const y = ((layerIdx + 0.6) / (layerCount + 0.2)) * canvasHeight + 20;
 
       nodesInLayer.forEach((node, nodeIdx) => {
-        const x = ((nodeIdx + 0.5) / count) * canvasWidth;
+        const x = ((nodeIdx + 0.5) / count) * canvasWidth + 40;
         node.x = x;
         node.y = y;
       });
@@ -99,15 +123,34 @@ const ArchitecturePage = () => {
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
-  const handleZoomReset = () => setZoom(1);
+  const handleZoomReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[#0A0A0C] font-body-md">
       <Sidebar />
+
+      {/* Mobile view Tab switcher */}
+      <div className="lg:hidden flex bg-[#16161d] border-b border-[#1E1E22] p-1.5 shrink-0 w-full">
+        <button 
+          onClick={() => setActiveMobileTab('input')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'input' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          System Input
+        </button>
+        <button 
+          onClick={() => setActiveMobileTab('canvas')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'canvas' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          Visual Map
+        </button>
+      </div>
 
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
         {/* Left: Input context */}
-        <div className="flex flex-col border-r border-[#1E1E22] overflow-hidden bg-[#0e0e12]">
+        <div className={`flex flex-col border-r border-[#1E1E22] overflow-hidden bg-[#0e0e12] ${activeMobileTab === 'input' ? 'flex' : 'hidden lg:flex'}`}>
           
           <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
             <span className="font-label-caps text-label-caps text-[#908fa0] uppercase tracking-wider flex items-center gap-2">
@@ -146,7 +189,7 @@ const ArchitecturePage = () => {
         </div>
 
         {/* Right: Interactive SVG Topology Board */}
-        <div className="flex flex-col bg-[#0B0F19] overflow-hidden relative">
+        <div className={`flex flex-col bg-[#0B0F19] overflow-hidden relative ${activeMobileTab === 'canvas' ? 'flex' : 'hidden lg:flex'}`}>
           
           <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
             <span className="font-label-caps text-label-caps text-[#908fa0] uppercase tracking-wider">Topology Canvas Map</span>
@@ -192,102 +235,141 @@ const ArchitecturePage = () => {
                   ref={canvasRef}
                   width="100%" 
                   height="100%" 
-                  style={{ 
-                    transform: `scale(${zoom})`, 
-                    transformOrigin: 'top left', 
-                    transition: 'transform 0.15s ease-out'
-                  }}
-                  className="select-none"
+                  viewBox="0 0 850 580"
+                  preserveAspectRatio="xMidYMid meet"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  className="select-none w-full h-full cursor-grab active:cursor-grabbing"
                 >
-                  <defs>
-                    <marker id="arrow" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
-                    </marker>
-                    <marker id="arrow-selected" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0c1ff" />
-                    </marker>
-                  </defs>
+                  <rect id="svg-bg" width="100%" height="100%" fill="transparent" />
+                  
+                  <g 
+                    style={{ 
+                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, 
+                      transformOrigin: '425px 290px',
+                      transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+                    }}
+                  >
+                    <defs>
+                      <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+                      </marker>
+                      <marker id="arrow-selected" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0c1ff" />
+                      </marker>
+                    </defs>
 
-                  {/* Draw Edges */}
-                  {report.edges.map((edge, idx) => {
-                    const fromNode = report.nodes.find(n => n.id === edge.from);
-                    const toNode = report.nodes.find(n => n.id === edge.to);
-                    if (!fromNode || !toNode) return null;
+                    {/* Draw Edges */}
+                    {report.edges.map((edge, idx) => {
+                      const fromNode = report.nodes.find(n => n.id === edge.from);
+                      const toNode = report.nodes.find(n => n.id === edge.to);
+                      if (!fromNode || !toNode) return null;
 
-                    const isSelected = selectedNode && (selectedNode.id === edge.from || selectedNode.id === edge.to);
+                      const isSelected = selectedNode && (selectedNode.id === edge.from || selectedNode.id === edge.to);
 
-                    return (
-                      <g key={idx}>
-                        <line 
-                          x1={fromNode.x + 60} 
-                          y1={fromNode.y + 20} 
-                          x2={toNode.x + 60} 
-                          y2={toNode.y + 20} 
-                          stroke={isSelected ? '#c0c1ff' : '#334155'} 
-                          strokeWidth={isSelected ? '2' : '1.5'} 
-                          markerEnd={`url(#${isSelected ? 'arrow-selected' : 'arrow'})`}
-                        />
-                        <text 
-                          x={(fromNode.x + toNode.x) / 2 + 60} 
-                          y={(fromNode.y + toNode.y) / 2 + 15} 
-                          fill={isSelected ? '#c0c1ff' : '#64748B'} 
-                          fontSize="9" 
-                          fontFamily="monospace"
-                          textAnchor="middle"
+                      // Calculate edge endpoints centered on the nodes
+                      const x1 = fromNode.x + 60;
+                      const y1 = fromNode.y + 20;
+                      const x2 = toNode.x + 60;
+                      const y2 = toNode.y + 20;
+
+                      // Midpoint calculation
+                      const midX = (x1 + x2) / 2;
+                      const midY = (y1 + y2) / 2;
+
+                      // Directional offset to avoid overlay
+                      const dx = x2 - x1;
+                      const dy = y2 - y1;
+                      const length = Math.sqrt(dx * dx + dy * dy) || 1;
+                      const px = -dy / length;
+                      const py = dx / length;
+
+                      // Determine label offset to prevent label overlapping with line or other labels
+                      const labelOffset = 14 + (idx % 2) * 8;
+                      const textX = midX + px * labelOffset;
+                      const textY = midY + py * labelOffset;
+
+                      return (
+                        <g key={idx}>
+                          <line 
+                            x1={x1} 
+                            y1={y1} 
+                            x2={x2} 
+                            y2={y2} 
+                            stroke={isSelected ? '#c0c1ff' : '#334155'} 
+                            strokeWidth={isSelected ? '2' : '1.5'} 
+                            markerEnd={`url(#${isSelected ? 'arrow-selected' : 'arrow'})`}
+                          />
+                          <text 
+                            x={textX} 
+                            y={textY} 
+                            fill={isSelected ? '#c0c1ff' : '#94A3B8'} 
+                            fontSize="9.5" 
+                            fontFamily="monospace"
+                            textAnchor="middle"
+                            stroke="#0A0A0C"
+                            strokeWidth="3.5px"
+                            paintOrder="stroke"
+                            strokeLinejoin="round"
+                            className="font-semibold select-none pointer-events-none"
+                          >
+                            {edge.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Draw Nodes */}
+                    {report.nodes.map((node) => {
+                      const color = getNodeColor(node.type);
+                      const isSelected = selectedNode?.id === node.id;
+                      return (
+                        <g 
+                          key={node.id} 
+                          transform={`translate(${node.x}, ${node.y})`}
+                          onClick={() => setSelectedNode(node)}
+                          className="cursor-pointer group"
                         >
-                          {edge.label}
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Draw Nodes */}
-                  {report.nodes.map((node) => {
-                    const color = getNodeColor(node.type);
-                    const isSelected = selectedNode?.id === node.id;
-                    return (
-                      <g 
-                        key={node.id} 
-                        transform={`translate(${node.x}, ${node.y})`}
-                        onClick={() => setSelectedNode(node)}
-                        className="cursor-pointer group"
-                      >
-                        <rect 
-                          width="120" 
-                          height="40" 
-                          rx="6" 
-                          fill="#16161D" 
-                          stroke={isSelected ? '#c0c1ff' : '#1E1E22'} 
-                          strokeWidth={isSelected ? '2' : '1'} 
-                        />
-                        <rect 
-                          width="4" 
-                          height="40" 
-                          rx="2"
-                          fill={color} 
-                        />
-                        <text 
-                          x="12" 
-                          y="18" 
-                          fill="#fff" 
-                          fontSize="10" 
-                          fontWeight="bold"
-                          fontFamily="sans-serif"
-                        >
-                          {node.label.length > 18 ? node.label.substring(0, 16) + '..' : node.label}
-                        </text>
-                        <text 
-                          x="12" 
-                          y="30" 
-                          fill="#64748B" 
-                          fontSize="8" 
-                          fontFamily="monospace"
-                        >
-                          {node.type.toUpperCase()}
-                        </text>
-                      </g>
-                    );
-                  })}
+                          <rect 
+                            width="120" 
+                            height="40" 
+                            rx="6" 
+                            fill="#16161D" 
+                            stroke={isSelected ? '#c0c1ff' : '#1E1E22'} 
+                            strokeWidth={isSelected ? '2' : '1'} 
+                            className="transition-all duration-200 group-hover:stroke-[#8083ff]/60"
+                          />
+                          <rect 
+                            width="4" 
+                            height="40" 
+                            rx="2"
+                            fill={color} 
+                          />
+                          <text 
+                            x="12" 
+                            y="18" 
+                            fill="#fff" 
+                            fontSize="10" 
+                            fontWeight="bold"
+                            fontFamily="sans-serif"
+                          >
+                            {node.label.length > 18 ? node.label.substring(0, 16) + '..' : node.label}
+                          </text>
+                          <text 
+                            x="12" 
+                            y="30" 
+                            fill="#64748B" 
+                            fontSize="8" 
+                            fontFamily="monospace"
+                          >
+                            {node.type.toUpperCase()}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </g>
                 </svg>
 
                 {/* Collapsible Architecture Summary Panel */}

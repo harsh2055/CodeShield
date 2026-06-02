@@ -22,6 +22,7 @@ const RefactoringPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [report, setReport] = useState(null);
+  const [activeMobileTab, setActiveMobileTab] = useState('source');
 
   const handleRefactor = async () => {
     if (!code.trim()) return;
@@ -67,8 +68,30 @@ const RefactoringPage = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[#0A0A0C] font-body-md">
       <Sidebar />
+
+      {/* Mobile view Tab switcher */}
+      <div className="lg:hidden flex bg-[#16161d] border-b border-[#1E1E22] p-1.5 shrink-0 w-full">
+        <button 
+          onClick={() => setActiveMobileTab('source')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'source' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          Source Code
+        </button>
+        <button 
+          onClick={() => setActiveMobileTab('optimized')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'optimized' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          Refactored Output
+        </button>
+        <button 
+          onClick={() => setActiveMobileTab('metrics')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'metrics' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          Metrics Spec
+        </button>
+      </div>
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Control Bar */}
@@ -121,13 +144,13 @@ const RefactoringPage = () => {
         </div>
 
         {/* Main Double Workspace Split */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           
           {/* Dual Monaco Panels */}
-          <div className="flex-1 flex overflow-hidden border-r border-[#1E1E22]">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden border-r border-[#1E1E22]">
             
             {/* Original Source */}
-            <div className="flex-1 flex flex-col border-r border-[#1E1E22]">
+            <div className={`flex-1 flex flex-col border-r border-[#1E1E22] ${activeMobileTab === 'source' ? 'flex' : 'hidden lg:flex'}`}>
               <div className="bg-[#16161D] px-4 py-2 border-b border-[#1E1E22] text-[10px] font-bold text-[#94A3B8] font-label-caps uppercase tracking-wider">
                 Original Workspace Source
               </div>
@@ -149,7 +172,7 @@ const RefactoringPage = () => {
             </div>
 
             {/* Refactored Output */}
-            <div className="flex-1 flex flex-col">
+            <div className={`flex-1 flex flex-col ${activeMobileTab === 'optimized' ? 'flex' : 'hidden lg:flex'}`}>
               <div className="bg-[#16161D] px-4 py-2 border-b border-[#1E1E22] text-[10px] font-bold text-[#4edea3] font-label-caps uppercase tracking-wider flex justify-between items-center h-9">
                 <span>Refactored Output Optimized</span>
                 {report && (
@@ -197,7 +220,7 @@ const RefactoringPage = () => {
           </div>
 
           {/* Right Metrics Panel */}
-          <div className="w-80 bg-[#0B0F19] p-6 overflow-y-auto shrink-0 flex flex-col gap-6">
+          <div className={`w-full lg:w-80 bg-[#0B0F19] p-6 overflow-y-auto shrink-0 flex flex-col gap-6 ${activeMobileTab === 'metrics' ? 'flex' : 'hidden lg:flex'}`}>
             {error && (
               <div className="bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 text-[#ffb4ab] rounded-lg p-4 text-xs">
                 ⚠️ {error}

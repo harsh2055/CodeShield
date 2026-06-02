@@ -38,6 +38,7 @@ const ExplainerPage = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState('workspace');
   
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -197,14 +198,30 @@ const ExplainerPage = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[#0A0A0C] font-body-md">
       <Sidebar />
+
+      {/* Mobile view Tab switcher */}
+      <div className="lg:hidden flex bg-[#16161d] border-b border-[#1E1E22] p-1.5 shrink-0 w-full">
+        <button 
+          onClick={() => setActiveMobileTab('workspace')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'workspace' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          Code Workspace
+        </button>
+        <button 
+          onClick={() => setActiveMobileTab('analysis')}
+          className={`flex-1 py-2 text-center text-xs font-bold font-label-caps rounded-lg transition-all ${activeMobileTab === 'analysis' ? 'bg-[#c0c1ff]/15 text-[#c0c1ff]' : 'text-[#908fa0]'}`}
+        >
+          AI Analysis
+        </button>
+      </div>
 
       {/* Main Split Layout */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
         
         {/* Left Side: Monaco & Sandbox */}
-        <div className="flex flex-col border-r border-[#1E1E22] overflow-hidden bg-[#0e0e12]">
+        <div className={`flex flex-col border-r border-[#1E1E22] overflow-hidden bg-[#0e0e12] ${activeMobileTab === 'workspace' ? 'flex' : 'hidden lg:flex'}`}>
           
           {/* Header Controls */}
           <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
@@ -348,7 +365,7 @@ const ExplainerPage = () => {
         </div>
 
         {/* Right Side: AI Explanations & Follow-up */}
-        <div className="flex flex-col bg-[#0B0F19] overflow-hidden">
+        <div className={`flex flex-col bg-[#0B0F19] overflow-hidden ${activeMobileTab === 'analysis' ? 'flex' : 'hidden lg:flex'}`}>
           
           {/* Top Header */}
           <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">

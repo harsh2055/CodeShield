@@ -105,7 +105,7 @@ const RepoPage = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[#0A0A0C] font-body-md">
       {/* Sidebar */}
       <Sidebar />
 

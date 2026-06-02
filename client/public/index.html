@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+  <script>
+    // Suppress ResizeObserver loop errors during capture phase to prevent CRA fullscreen overlay
+    window.addEventListener('error', function(e) {
+      if (e && e.message && (e.message.indexOf('ResizeObserver') !== -1 || e.message.indexOf('Resize observer') !== -1)) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
+  </script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="CodeShield — AI-powered code explainer, debugger, and repository analyzer." />
