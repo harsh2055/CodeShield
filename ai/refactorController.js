@@ -51,7 +51,7 @@ const refactorCode = asyncHandler(async (req, res) => {
 
   try {
     const response = await client.chat.completions.create({
-      model: 'qwen/qwen3-coder-480b-a35b-instruct',
+      model: 'meta/llama-3.1-70b-instruct',
       max_tokens: 4096,
       messages: [
         { 
