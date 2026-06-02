@@ -105,28 +105,35 @@ const RepoPage = () => {
   };
 
   return (
-    <div className="app-layout">
+    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="panel-topbar" style={{ padding: '15px 20px', borderBottom: '1px solid #1E293B', background: '#0F172A' }}>
-          <h1 style={{ fontSize: '18px', margin: '0 0 10px 0' }}>Repository Architecture Analyzer</h1>
-          <form onSubmit={handleAnalyze} style={{ display: 'flex', gap: '10px' }}>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0B0F19]">
+        {/* Top Control Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-6 py-4 bg-[#16161d] border-b border-[#1E1E22] shrink-0 gap-4">
+          <div>
+            <h1 className="text-[16px] font-bold text-white tracking-tight flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-[#c0c1ff]">account_tree</span> Repository Architecture Analyzer
+            </h1>
+            <p className="text-[11px] text-[#908fa0]">Paste a public GitHub repository link to inspect codebase maps and file trees.</p>
+          </div>
+
+          <form onSubmit={handleAnalyze} className="flex gap-2 w-full md:w-auto items-center">
             <input 
               type="text" 
               placeholder="https://github.com/owner/repo" 
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #334155', background: '#1E293B', color: '#fff' }}
               disabled={loading}
+              className="bg-[#1c1b1d] border border-[#1E1E22] text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#c0c1ff] w-64"
             />
             <select 
               value={model} 
               onChange={(e) => setModel(e.target.value)}
-              style={{ width: '200px', padding: '10px', borderRadius: '4px', border: '1px solid #334155', background: '#1E293B', color: '#fff' }}
               disabled={loading}
+              className="bg-[#1c1b1d] border border-[#1E1E22] text-[#e5e1e4] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-[#c0c1ff]"
             >
               {MODELS.map((m) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
@@ -135,7 +142,7 @@ const RepoPage = () => {
             <button 
               type="submit"
               disabled={loading || !url.trim()}
-              style={{ padding: '10px 20px', borderRadius: '4px', background: '#3B82F6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+              className="bg-[#8083ff] text-white hover:bg-[#c0c1ff] hover:text-black rounded-lg px-5 py-1.5 text-xs font-bold transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(128,131,255,0.2)]"
             >
               {loading ? 'Analyzing...' : 'Analyze'}
             </button>
@@ -144,28 +151,31 @@ const RepoPage = () => {
                 type="button"
                 onClick={handleExportPDF}
                 disabled={isExporting}
-                style={{ padding: '10px 20px', borderRadius: '4px', background: 'transparent', color: '#94A3B8', border: '1px solid #334155', cursor: 'pointer' }}
+                className="bg-transparent border border-[#1E1E22] hover:border-[#c0c1ff] text-[#94A3B8] hover:text-white rounded-lg px-4 py-1.5 text-xs transition-all cursor-pointer"
               >
-                {isExporting ? '⏳ Exporting...' : '📄 PDF'}
+                {isExporting ? '⏳' : '📄 PDF'}
               </button>
             )}
           </form>
         </div>
 
-        <div style={{ flex: 1, padding: '30px', overflowY: 'auto', background: '#0B0F19' }}>
-          {error && <div className="error-banner" style={{ marginBottom: '20px' }}>⚠️ {error}</div>}
+        {/* Audit Details Panel */}
+        <div className="flex-1 p-8 overflow-y-auto bg-[#0A0A0C] node-line">
+          {error && <div className="bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 text-[#ffb4ab] rounded-lg p-4 text-xs mb-6">⚠️ {error}</div>}
 
           {!analysis && !loading && !error && (
-            <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: '100px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏗️</div>
-              <p>Paste a public GitHub URL above to generate an architectural breakdown.</p>
-              <p style={{ fontSize: '12px', marginTop: '10px' }}>CodeShield will fetch the repository tree and README to construct a high-level overview.</p>
+            <div className="flex flex-col items-center justify-center text-center text-[#64748B] h-full gap-4 mt-20">
+              <span className="material-symbols-outlined text-5xl text-[#908fa0] opacity-30">deployed_code</span>
+              <h3 className="text-white font-bold text-sm">Static Directory Topology Loader</h3>
+              <p className="text-[13px] leading-relaxed max-w-sm">
+                Paste any public GitHub repository URL above. CodeShield will fetch the directory tree and README files to map component dependencies.
+              </p>
             </div>
           )}
 
           {analysis && (
-            <div ref={contentRef} style={{ background: '#0B0F19', padding: '20px', borderRadius: '8px' }}>
-              <div className="markdown-body" style={{ lineHeight: '1.6' }}>
+            <div ref={contentRef} className="glass-panel p-6 rounded-xl border border-[#1E1E22] bg-[#16161D] max-w-4xl mx-auto shadow-xl select-text animate-fadeIn">
+              <div className="markdown-body text-[13.5px] leading-relaxed">
                 <ReactMarkdown>{analysis}</ReactMarkdown>
               </div>
             </div>

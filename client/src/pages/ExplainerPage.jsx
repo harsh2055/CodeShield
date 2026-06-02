@@ -21,24 +21,23 @@ const MODELS = [
 ];
 
 const ExplainerPage = () => {
-  const { user, logout } = useAuth();
-  const { teams, activeTeamId, switchTeam } = useTeam();
-  const { explain, sendFollowUp, messages, loading, error, meta } = useExplain();
+  const { user } = useAuth();
+  const { activeTeamId } = useTeam();
+  const { explain, sendFollowUp, messages, loading, error } = useExplain();
   
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState('// Paste your code here to analyze, explain or debug\nfunction calculateFactorial(n) {\n  if (n < 0) return null;\n  if (n === 0) return 1;\n  return n * calculateFactorial(n - 1);\n}');
   const [language, setLanguage] = useState('auto');
   const [level, setLevel] = useState('beginner');
   const [model, setModel] = useState(MODELS[0].id);
   const [chatInput, setChatInput] = useState('');
   
-  // New State
   const [errorMessage, setErrorMessage] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [terminalOutput, setTerminalOutput] = useState('');
   const [isSandboxRunning, setIsSandboxRunning] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
-  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -47,19 +46,17 @@ const ExplainerPage = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle extension #code= imports (hash fragment bypasses WAF)
   useEffect(() => {
-    const hash = window.location.hash; // e.g. "#code=..."
+    const hash = window.location.hash;
     if (hash.startsWith('#code=')) {
-      const importedCode = decodeURIComponent(hash.slice(6)); // remove "#code="
+      const importedCode = decodeURIComponent(hash.slice(6));
       if (importedCode) {
         setCode(importedCode);
         explain({ code: importedCode, language: 'auto', level: 'beginner', modelId: MODELS[0].id, action: 'explain', teamId: activeTeamId });
-        // Clean up hash so refreshing doesn't re-trigger
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, []); // Run only once on mount
+  }, []);
 
   const handleExplain = async (e) => {
     e.preventDefault();
@@ -98,59 +95,34 @@ const ExplainerPage = () => {
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split('\n');
-        
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataStr = line.replace('data: ', '').trim();
             if (!dataStr) continue;
             try {
               const data = JSON.parse(dataStr);
-              
               if (data.status) {
-                setTerminalOutput((prev) => prev + '> ' + data.status + '\n');
+                setTerminalOutput((prev) => prev + `[AGENT] ${data.status}\n`);
               }
               if (data.code) {
                 setCode(data.code);
               }
               if (data.output) {
-                setTerminalOutput((prev) => prev + '\n[OUTPUT]\n' + data.output + '\n');
+                setTerminalOutput((prev) => prev + `[OUTPUT] ${data.output}\n`);
               }
               if (data.error) {
-                setTerminalOutput((prev) => prev + '\n[ERROR]\n' + data.error + '\n');
+                setTerminalOutput((prev) => prev + `[ERROR] ${data.error}\n`);
               }
-            } catch (e) {
-              console.error('Failed to parse SSE chunk:', dataStr);
+            } catch (err) {
+              console.error(err);
             }
           }
         }
       }
     } catch (err) {
-      setTerminalOutput((prev) => prev + '\nAuto-fix failed: ' + err.message);
+      setTerminalOutput((prev) => prev + `[FATAL] Autonomous agent failed: ${err.message}\n`);
     } finally {
       setIsAgentRunning(false);
-    }
-  };
-
-  const handleChatSubmit = async (e) => {
-    e.preventDefault();
-    if (!chatInput.trim() || loading) return;
-    const msg = chatInput;
-    setChatInput('');
-    await sendFollowUp(msg);
-  };
-
-  const handleRunCode = async () => {
-    if (!code.trim()) return;
-    setIsSandboxRunning(true);
-    setTerminalOutput('Running code...');
-    try {
-      const result = await executeCode(code, language === 'auto' ? 'javascript' : language);
-      const combinedOutput = result.stdout + (result.stderr ? '\n[STDERR]\n' + result.stderr : '');
-      setTerminalOutput(combinedOutput || 'Code executed successfully with no output.');
-    } catch (err) {
-      setTerminalOutput(err.message || 'Sandbox execution failed.');
-    } finally {
-      setIsSandboxRunning(false);
     }
   };
 
@@ -158,31 +130,20 @@ const ExplainerPage = () => {
     if (!githubUrl.trim()) return;
     setIsImporting(true);
     try {
-      let rawUrl = githubUrl.trim();
-      
-      // Basic validation: It must be a file, not a repo root or clone link
-      if (rawUrl.endsWith('.git')) {
-        throw new Error('Please provide a link to a specific file, not the .git repository clone link.');
-      }
-
-      if (rawUrl.includes('github.com')) {
-        if (!rawUrl.includes('/blob/')) {
-          throw new Error('Please navigate to a specific file on GitHub and paste its URL (it should contain /blob/).');
-        }
-        rawUrl = rawUrl.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-      }
-      
-      const response = await fetch(rawUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file. Server responded with status ${response.status}.`);
-      }
-      const text = await response.text();
-      setCode(text);
-      
-      // Attempt to auto-detect language from extension
-      const ext = rawUrl.split('.').pop().toLowerCase();
-      const extMap = { js: 'javascript', ts: 'typescript', py: 'python', java: 'java', cpp: 'cpp', c: 'c', rs: 'rust', go: 'go', rb: 'ruby', php: 'php', swift: 'swift', kt: 'kotlin', sql: 'sql' };
-      if (extMap[ext]) setLanguage(extMap[ext]);
+      const token = localStorage.getItem('cl_token');
+      const response = await fetch('/api/repo/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ url: githubUrl })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setCode(data.content);
+      if (data.language) setLanguage(data.language);
+      alert('GitHub file imported successfully!');
     } catch (err) {
       alert(`Could not import: ${err.message}`);
     } finally {
@@ -190,7 +151,30 @@ const ExplainerPage = () => {
     }
   };
 
-  const [isExporting, setIsExporting] = useState(false);
+  const handleSandboxRun = async () => {
+    setIsSandboxRunning(true);
+    setTerminalOutput('> Compiling and launching secure environment...\n');
+    try {
+      const res = await executeCode(language, code);
+      if (res.program_error || res.compiler_error) {
+        setTerminalOutput((prev) => prev + `[ERR] ${res.program_error || res.compiler_error}\n`);
+      } else {
+        setTerminalOutput((prev) => prev + `[RUN] ${res.program_message || res.compiler_message || 'Successfully executed.'}\n`);
+      }
+    } catch (err) {
+      setTerminalOutput((prev) => prev + `[FATAL] Sandbox crash: ${err.message}\n`);
+    } finally {
+      setIsSandboxRunning(false);
+    }
+  };
+
+  const handleSendFollowUp = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || loading) return;
+    const text = chatInput;
+    setChatInput('');
+    await sendFollowUp({ message: text, modelId: model });
+  };
 
   const handleExportPDF = async () => {
     if (!chatContainerRef.current) return;
@@ -206,48 +190,61 @@ const ExplainerPage = () => {
       await html2pdf().set(opt).from(chatContainerRef.current).save();
     } catch (err) {
       console.error(err);
-      alert('Failed to export PDF. Check console for details.');
+      alert('Failed to export PDF.');
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <div className="app-layout">
-      {/* Sidebar */}
+    <div className="h-screen flex overflow-hidden bg-[#0A0A0C] font-body-md">
       <Sidebar />
 
-      {/* Main */}
-      <main className="main-content">
-        <div className="editor-panel">
-          <div className="panel-topbar">
-            <span className="panel-label">Workspace</span>
-            <div className="topbar-controls" style={{ display: 'flex', gap: '8px' }}>
+      {/* Main Split Layout */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+        
+        {/* Left Side: Monaco & Sandbox */}
+        <div className="flex flex-col border-r border-[#1E1E22] overflow-hidden bg-[#0e0e12]">
+          
+          {/* Header Controls */}
+          <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
+            <span className="font-label-caps text-label-caps text-[#908fa0] uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">terminal</span> Code Workspace
+            </span>
+            <div className="flex gap-2">
               <input 
                 type="text" 
                 placeholder="Paste GitHub URL..." 
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
-                style={{ background: '#1e1e28', border: '1px solid #334155', color: '#fff', borderRadius: '4px', padding: '4px 8px', fontSize: '12px' }}
+                className="bg-[#1c1b1d] border border-[#1E1E22] text-white rounded-lg px-3 py-1 text-xs focus:outline-none focus:border-[#c0c1ff] w-48"
               />
               <button 
                 onClick={handleGithubImport}
                 disabled={isImporting || !githubUrl}
-                style={{ background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
+                className="bg-[#8083ff] text-white hover:bg-[#c0c1ff] hover:text-black rounded-lg px-3 py-1 text-[11px] font-semibold cursor-pointer disabled:opacity-40 transition-all active:scale-95"
               >
                 {isImporting ? '⏳' : 'Import'}
               </button>
             </div>
           </div>
-          
-          <div className="panel-topbar" style={{ borderTop: '1px solid #1E293B' }}>
-            <div className="topbar-controls" style={{ display: 'flex', gap: '8px', width: '100%' }}>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} style={{ flex: 1 }}>
-                {LANGUAGES.map((l) => (
-                  <option key={l} value={l}>{l === 'auto' ? 'Auto-detect Language' : l}</option>
+
+          <div className="flex justify-between items-center px-6 h-10 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
+            <div className="flex gap-4">
+              <select 
+                value={language} 
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-[#1c1b1d] border border-[#1E1E22] text-[#e5e1e4] rounded px-2 py-0.5 text-xs focus:outline-none"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>{lang}</option>
                 ))}
               </select>
-              <select value={model} onChange={(e) => setModel(e.target.value)} style={{ flex: 1 }}>
+              <select 
+                value={model} 
+                onChange={(e) => setModel(e.target.value)}
+                className="bg-[#1c1b1d] border border-[#1E1E22] text-[#e5e1e4] rounded px-2 py-0.5 text-xs focus:outline-none"
+              >
                 {MODELS.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
@@ -255,166 +252,200 @@ const ExplainerPage = () => {
             </div>
           </div>
 
-          <div style={{ flex: 1, minHeight: 0, padding: '10px 0', overflow: 'hidden' }}>
+          {/* Monaco Editor Container */}
+          <div className="flex-1 relative overflow-hidden bg-[#0A0A0C]">
             <Editor
               height="100%"
               theme="vs-dark"
               language={language === 'auto' ? 'javascript' : language}
               value={code}
               onChange={(val) => setCode(val || '')}
-              options={{ minimap: { enabled: false }, fontSize: 14 }}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: 'JetBrains Mono, monospace',
+                lineHeight: 20,
+              }}
             />
           </div>
 
-          {/* Sandbox Terminal */}
+          {/* Sandbox Terminal Output */}
           {terminalOutput && (
-            <div style={{ height: '150px', background: '#000', color: '#0f0', padding: '10px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '12px', borderTop: '1px solid #333' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#888' }}>
-                <span>Terminal Output</span>
-                <button onClick={() => setTerminalOutput('')} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}>✖</button>
+            <div className="h-40 bg-[#0e0e10] border-t border-[#1E1E22] flex flex-col overflow-hidden">
+              <div className="flex justify-between items-center px-4 py-1.5 bg-[#16161d] border-b border-[#1E1E22] shrink-0 text-[10px] font-label-caps text-[#908fa0]">
+                <span>🖥️ Secure Execution Terminal</span>
+                <button className="hover:text-white" onClick={() => setTerminalOutput('')}>Clear</button>
               </div>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{terminalOutput}</pre>
+              <pre className="flex-1 p-3 overflow-y-auto font-code-md text-[11px] text-[#4edea3] leading-relaxed select-text">
+                {terminalOutput}
+              </pre>
             </div>
           )}
 
-          <div className="editor-footer" style={{ flexWrap: 'wrap' }}>
-            <div className="level-pills">
-              {LEVELS.map((l) => (
-                <button
-                  key={l}
-                  className={`pill ${level === l ? 'active' : ''}`}
-                  onClick={() => setLevel(l)}
+          {/* Workspace Footer Actions */}
+          <div className="px-6 py-3 border-t border-[#1E1E22] bg-[#16161d] shrink-0 flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              {/* Level Pills */}
+              <div className="flex gap-1.5">
+                {LEVELS.map((lvl) => (
+                  <button
+                    key={lvl}
+                    onClick={() => setLevel(lvl)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider font-label-caps transition-all cursor-pointer ${
+                      level === lvl 
+                        ? 'bg-[#c0c1ff]/15 border border-[#c0c1ff] text-[#c0c1ff]' 
+                        : 'bg-transparent border border-[#1E1E22] text-[#908fa0] hover:text-white'
+                    }`}
+                  >
+                    {lvl.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Explain & Debug Buttons */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleSandboxRun} 
+                  disabled={isSandboxRunning}
+                  className="bg-[#353437] text-white border border-[#1E1E22] hover:bg-[#39393b] rounded-lg px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-40 transition-all active:scale-95"
                 >
-                  {l}
+                  <span className="material-symbols-outlined text-[16px]">play_arrow</span> Run
                 </button>
-              ))}
+                <button 
+                  onClick={handleDebug} 
+                  disabled={loading}
+                  className="bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 text-[#ffb4ab] hover:bg-[#ffb4ab]/15 rounded-lg px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-40 transition-all active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">bug_report</span> Debug
+                </button>
+                <button 
+                  onClick={handleAutoFix} 
+                  disabled={isAgentRunning}
+                  className="bg-[#ca8100]/20 border border-[#ffb95f]/30 text-[#ffb95f] hover:bg-[#ca8100]/35 rounded-lg px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-40 transition-all active:scale-95 animate-pulse"
+                >
+                  <span className="material-symbols-outlined text-[16px]">auto_fix_high</span> Auto-Fix
+                </button>
+                <button 
+                  onClick={handleExplain} 
+                  disabled={loading}
+                  className="bg-[#8083ff] text-white hover:bg-[#c0c1ff] hover:text-black rounded-lg px-5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-40 transition-all active:scale-95 shadow-[0_0_20px_rgba(128,131,255,0.2)]"
+                >
+                  <span className="material-symbols-outlined text-[16px]">neurology</span> Explain
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-              <button
-                className="btn-explain"
-                onClick={handleRunCode}
-                disabled={isSandboxRunning || !code.trim() || language === 'auto'}
-                style={{ background: '#10B981' }}
-              >
-                {isSandboxRunning ? '⏳' : '▶️ Run'}
-              </button>
-              <button
-                className="btn-explain"
-                onClick={handleExplain}
-                disabled={loading || !code.trim()}
-              >
-                {loading && messages.length === 0 ? '⏳' : '⚡ Explain'}
-              </button>
-              <button
-                className="btn-explain"
-                onClick={handleDebug}
-                disabled={loading || !code.trim()}
-                style={{ background: '#EF4444' }}
-              >
-                {loading && messages.length === 0 ? '⏳' : '🐞 Debug'}
-              </button>
-              <button
-                className="btn-explain"
-                onClick={handleAutoFix}
-                disabled={isAgentRunning || !code.trim() || language === 'auto'}
-                style={{ background: '#8B5CF6' }}
-              >
-                {isAgentRunning ? '⏳' : '🤖 Auto-Fix'}
-              </button>
-            </div>
-            
+
+            {/* Error Message Input for Debugging */}
             <input 
               type="text" 
-              placeholder="Optional: Paste error message here before debugging..."
+              placeholder="Optional: Paste compiler/runtime error message here before clicking Debug..."
               value={errorMessage}
               onChange={(e) => setErrorMessage(e.target.value)}
-              style={{ width: '100%', marginTop: '10px', background: '#1e1e28', border: '1px solid #334155', color: '#fff', borderRadius: '4px', padding: '8px', fontSize: '13px' }}
+              className="w-full bg-[#1c1b1d] border border-[#1E1E22] text-[#ffb4ab] placeholder-[#ffb4ab]/40 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#ffb4ab]/50"
             />
           </div>
+
         </div>
 
-        <div className="output-panel" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="panel-topbar">
-            <span className="panel-label">AI Analysis & Chat</span>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              {messages.length > 0 && (
-                <button 
-                  onClick={handleExportPDF}
-                  disabled={isExporting}
-                  style={{ background: 'transparent', border: '1px solid #334155', color: '#94A3B8', borderRadius: '4px', padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
-                >
-                  {isExporting ? '⏳ Exporting...' : '📄 Export PDF'}
-                </button>
-              )}
-
-            </div>
+        {/* Right Side: AI Explanations & Follow-up */}
+        <div className="flex flex-col bg-[#0B0F19] overflow-hidden">
+          
+          {/* Top Header */}
+          <div className="flex justify-between items-center px-6 h-14 bg-[#16161d] border-b border-[#1E1E22] shrink-0">
+            <span className="font-label-caps text-label-caps text-[#908fa0] uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">psychology</span> Analysis & Explanations
+            </span>
+            {messages.length > 0 && (
+              <button 
+                onClick={handleExportPDF} 
+                disabled={isExporting}
+                className="bg-transparent border border-[#1E1E22] hover:border-[#c0c1ff] text-[#908fa0] hover:text-white rounded-lg px-3 py-1 text-[11px] font-label-caps cursor-pointer disabled:opacity-40 transition-all"
+              >
+                {isExporting ? '⏳ Exporting...' : '📄 PDF Report'}
+              </button>
+            )}
           </div>
 
-          <div className="output-body" style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-            {error && <div className="error-banner">⚠️ {error}</div>}
-
-            {messages.length === 0 && !error && !loading && (
-              <div className="output-placeholder">
-                <div className="placeholder-icon">🔬</div>
-                <p>Paste code on the left and hit Explain or Debug</p>
+          {/* Explanation Chat Thread */}
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6" ref={chatContainerRef}>
+            {error && (
+              <div className="bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 text-[#ffb4ab] rounded-lg p-4 text-xs">
+                ⚠️ {error}
               </div>
             )}
 
-            <div ref={chatContainerRef} style={{ background: '#0B0F19' /* needed for pdf */ }}>
-              {messages.map((msg, idx) => (
-                <div key={idx} style={{ 
-                  marginBottom: '20px', 
-                  padding: '15px', 
-                  borderRadius: '8px',
-                  backgroundColor: msg.role === 'user' ? '#1E293B' : 'transparent',
-                  border: msg.role === 'user' ? '1px solid #334155' : 'none',
-                  pageBreakInside: 'avoid'
-                }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px', color: msg.role === 'user' ? '#38BDF8' : '#A78BFA' }}>
-                    {msg.role === 'user' ? 'You' : 'CodeShield AI'}
+            {messages.length === 0 && !loading && !error && (
+              <div className="flex-1 flex flex-col items-center justify-center text-center text-[#64748B] p-8 gap-4">
+                <span className="material-symbols-outlined text-4xl text-[#908fa0] opacity-30">terminal</span>
+                <p className="text-[13px] leading-relaxed max-w-sm">
+                  Your secure environment is active. Write or import some code in the workspace and click **Explain** or **Debug** to trigger static audits.
+                </p>
+              </div>
+            )}
+
+            {messages.map((m, idx) => {
+              const isAssistant = m.role === 'assistant';
+              return (
+                <div 
+                  key={idx} 
+                  className={`flex flex-col gap-2 p-5 rounded-xl border relative overflow-hidden transition-all duration-150 ${
+                    isAssistant 
+                      ? 'bg-[#16161D] border-[#1E1E22] text-[#CBD5E1] shadow-md' 
+                      : 'bg-[#1e1e28]/50 border-[#8083ff]/20 text-[#c0c1ff]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-[#1E1E22] mb-3">
+                    <span className="text-[10px] font-label-caps uppercase tracking-wider text-[#908fa0] flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[14px]">
+                        {isAssistant ? 'neurology' : 'person'}
+                      </span>
+                      {isAssistant ? 'CodeShield Intelligence' : 'Code Developer'}
+                    </span>
+                    <span className="text-[10px] text-[#64748B] font-code-md">
+                      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                  <div className="markdown-body" style={{ lineHeight: '1.6' }}>
-                    {msg.role === 'user' ? (
-                      <p style={{ color: '#fff' }}>{msg.content}</p>
-                    ) : (
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    )}
+
+                  <div className="markdown-body text-[13.5px] leading-relaxed select-text">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            {loading && messages.length > 0 && messages[messages.length-1].role === 'user' && (
-              <div className="loading-dots" style={{ padding: '20px' }}>
-                <span /><span /><span />
+              );
+            })}
+
+            {loading && (
+              <div className="flex flex-col gap-2 p-5 rounded-xl border bg-[#16161D] border-[#1E1E22] text-[#CBD5E1]">
+                <div className="loading-dots mb-2">
+                  <span></span><span></span><span></span>
+                </div>
+                <p className="text-[12px] text-[#908fa0]">AI is analyzing algorithms and processing structural logic...</p>
               </div>
             )}
-            
+
             <div ref={chatEndRef} />
           </div>
 
-          {/* Chat Input for follow ups */}
+          {/* Follow-up Interactive Input */}
           {messages.length > 0 && (
-            <div style={{ padding: '15px', borderTop: '1px solid #1E293B', backgroundColor: '#0B0F19' }}>
-              <form onSubmit={handleChatSubmit} style={{ display: 'flex', gap: '10px' }}>
-                <input 
-                  type="text" 
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a follow-up question..."
-                  style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#1E293B', color: 'white', fontSize: '14px' }}
-                  disabled={loading}
-                />
-                <button 
-                  type="submit" 
-                  disabled={loading || !chatInput.trim()}
-                  style={{ padding: '0 20px', borderRadius: '6px', backgroundColor: '#3B82F6', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                  Send
-                </button>
-              </form>
-            </div>
+            <form onSubmit={handleSendFollowUp} className="p-4 bg-[#16161d] border-t border-[#1E1E22] shrink-0 flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Ask follow-up questions on this analysis..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                disabled={loading}
+                className="flex-1 bg-[#1c1b1d] border border-[#1E1E22] text-white placeholder-[#64748B] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-[#c0c1ff] disabled:opacity-50"
+              />
+              <button 
+                type="submit"
+                disabled={loading || !chatInput.trim()}
+                className="bg-[#8083ff] text-white hover:bg-[#c0c1ff] hover:text-black rounded-lg px-5 py-2.5 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-40 transition-all active:scale-95"
+              >
+                Send <span className="material-symbols-outlined text-[16px]">send</span>
+              </button>
+            </form>
           )}
+
         </div>
       </main>
     </div>
