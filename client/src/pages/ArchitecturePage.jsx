@@ -174,7 +174,7 @@ const ArchitecturePage = () => {
             />
           </div>
 
-          <div className="px-6 py-3 border-t border-[#1E1E22] bg-[#16161d] shrink-0 flex justify-between items-center">
+          <div className="px-6 py-3 border-t border-[#1E1E22] bg-[#16161d] shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <span className="text-[11px] text-[#64748B]">
               Maps databases, microservices, APIs, gateways and dependency flows.
             </span>

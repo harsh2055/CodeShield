@@ -301,9 +301,9 @@ const ExplainerPage = () => {
 
           {/* Workspace Footer Actions */}
           <div className="px-6 py-3 border-t border-[#1E1E22] bg-[#16161d] shrink-0 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3">
               {/* Level Pills */}
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {LEVELS.map((lvl) => (
                   <button
                     key={lvl}
@@ -320,7 +320,7 @@ const ExplainerPage = () => {
               </div>
 
               {/* Explain & Debug Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button 
                   onClick={handleSandboxRun} 
                   disabled={isSandboxRunning}
